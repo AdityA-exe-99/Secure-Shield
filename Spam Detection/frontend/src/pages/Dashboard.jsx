@@ -6,13 +6,13 @@ import { getMetrics } from '../services/api.js'
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState(null)
+  const [error, setError] = useState(null)
   const [data, setData] = useState(null)
 
   useEffect(() => {
     getMetrics()
       .then(({ data }) => setData(data))
-      .catch(e => setErr(e?.response?.data?.detail || 'Failed to load metrics'))
+      .catch(e => setError(e?.response?.data?.detail || 'Failed to load metrics'))
       .finally(() => setLoading(false))
   }, [])
 
@@ -24,25 +24,26 @@ export default function Dashboard() {
     )
   }
 
-  if (err) {
+  if (error) {
     return (
       <div className="container">
-        <div className="card">Error: {err}</div>
+        <div className="card">Error: {error}</div>
       </div>
     )
   }
 
   const t = data?.totals ?? { scans: 0, spam: 0, ham: 0, avg_confidence: 0 }
 
-  const avgPct = t.avg_confidence > 1
-      ? t.avg_confidence / 100   
-      : t.avg_confidence * 100
+  // Show avg confidence as percentage whether backend returns 0–1 or 0–100
+  const avgPct =
+    t.avg_confidence > 1 ? t.avg_confidence : t.avg_confidence * 100
 
   return (
     <div className="container">
       <h2>Security Dashboard</h2>
       <div className="small">Monitor your email security in real-time</div>
 
+      {/* KPIs */}
       <div className="grid grid-4" style={{ marginTop: 16 }}>
         <div className="card kpi">
           <h3>Total Scans</h3>
@@ -52,23 +53,34 @@ export default function Dashboard() {
 
         <div className="card kpi">
           <h3>Spam Detected</h3>
-          <p className="value" style={{ color: '#ef4444' }}>{t.spam.toLocaleString()}</p>
-          <p className="small">{((t.spam / (t.scans || 1)) * 100).toFixed(1)}% spam rate</p>
+          <p className="value" style={{ color: '#ef4444' }}>
+            {t.spam.toLocaleString()}
+          </p>
+          <p className="small">
+            {((t.spam / (t.scans || 1)) * 100).toFixed(1)}% spam rate
+          </p>
         </div>
 
         <div className="card kpi">
           <h3>Safe Emails</h3>
-          <p className="value" style={{ color: '#22c55e' }}>{t.ham.toLocaleString()}</p>
-          <p className="small">{((t.ham / (t.scans || 1)) * 100).toFixed(1)}% safe rate</p>
+          <p className="value" style={{ color: '#22c55e' }}>
+            {t.ham.toLocaleString()}
+          </p>
+          <p className="small">
+            {((t.ham / (t.scans || 1)) * 100).toFixed(1)}% safe rate
+          </p>
         </div>
 
         <div className="card kpi">
           <h3>Avg Confidence</h3>
-          <p className="value" style={{ color: '#3b82f6' }}>{`${avgPct.toFixed(2)}%`}</p>
+          <p className="value" style={{ color: '#3b82f6' }}>
+            {avgPct.toFixed(1)}%
+          </p>
           <p className="small">Model confidence</p>
         </div>
       </div>
 
+      {/* Charts */}
       <div className="grid" style={{ marginTop: 16 }}>
         <div className="card chart">
           <h3>Model Performance</h3>
