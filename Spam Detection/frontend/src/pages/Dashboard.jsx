@@ -1,27 +1,88 @@
 import { useEffect, useState } from 'react'
-import KPIStat from '../components/KPIStat.jsx'
 import PerformanceBarChart from '../components/PerformanceBarChart.jsx'
 import ConfusionBarChart from '../components/ConfusionBarChart.jsx'
 import { getMetrics } from '../services/api.js'
-export default function Dashboard(){
+
+export default function Dashboard() {
   const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState(null)
+  const [error, setError] = useState(null)
   const [data, setData] = useState(null)
-  useEffect(()=>{ getMetrics().then(({data})=>setData(data)).catch(e=>setErr(e?.response?.data?.detail||'Failed to load metrics')).finally(()=>setLoading(false)) },[])
-  if (loading) return <div className="container"><div className="card">Loading dashboard…</div></div>
-  if (err) return <div className="container"><div className="card">Error: {err}</div></div>
-  const t = data?.totals || { scans:0, spam:0, ham:0, avg_confidence:0 }
-  return (<div className="container">
-    <h2>Security Dashboard</h2><div className="small">Monitor your email security in real-time</div>
-    <div className="grid grid-4" style={{marginTop:12}}>
-      <KPIStat title="Total Scans" value={t.scans.toLocaleString()} subtitle="All time" />
-      <KPIStat title="Spam Detected" value={t.spam.toLocaleString()} subtitle={((t.spam/(t.scans||1))*100).toFixed(1)+'% spam rate'} color="#ef4444" />
-      <KPIStat title="Safe Emails" value={t.ham.toLocaleString()} subtitle={((t.ham/(t.scans||1))*100).toFixed(1)+'% safe rate'} color="#22c55e" />
-      <KPIStat title="Avg Confidence" value={t.avg_confidence.toFixed(1)+'%'} subtitle="Model confidence" color="#93c5fd" />
+
+  useEffect(() => {
+    getMetrics()
+      .then(({ data }) => setData(data))
+      .catch(e => setError(e?.response?.data?.detail || 'Failed to load metrics'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading)
+    return (
+      <div className="container">
+        <div className="card">Loading dashboard…</div>
+      </div>
+    )
+
+  if (error)
+    return (
+      <div className="container">
+        <div className="card">Error: {error}</div>
+      </div>
+    )
+
+  const t = data?.totals || { scans: 0, spam: 0, ham: 0, avg_confidence: 0 }
+
+  return (
+    <div className="container">
+      <h2>Security Dashboard</h2>
+      <p className="small">Monitor your email spam detection results</p>
+
+      {/* KPI Section */}
+      <div className="grid grid-4" style={{ marginTop: 20 }}>
+        <div className="card kpi">
+          <h3>Total Scans</h3>
+          <p className="value">{t.scans.toLocaleString()}</p>
+          <p className="small">All time</p>
+        </div>
+
+        <div className="card kpi">
+          <h3>Spam Detected</h3>
+          <p className="value" style={{ color: '#ef4444' }}>{t.spam.toLocaleString()}</p>
+          <p className="small">{((t.spam / (t.scans || 1)) * 100).toFixed(1)}% spam rate</p>
+        </div>
+
+        <div className="card kpi">
+          <h3>Safe Emails</h3>
+          <p className="value" style={{ color: '#22c55e' }}>{t.ham.toLocaleString()}</p>
+          <p className="small">{((t.ham / (t.scans || 1)) * 100).toFixed(1)}% safe rate</p>
+        </div>
+
+        <div className="card kpi">
+          <h3>Avg Confidence</h3>
+          <p className="value" style={{ color: '#3b82f6' }}>{t.avg_confidence.toFixed(1)}%</p>
+          <p className="small">Model confidence</p>
+        </div>
+      </div>
+
+      {/* Charts */}
+      <div className="grid" style={{ marginTop: 20 }}>
+        <div className="card">
+          <h3>Model Performance</h3>
+          <PerformanceBarChart
+            labels={data.comparison.labels}
+            nb={data.comparison.nb}
+            lr={data.comparison.lr}
+          />
+        </div>
+
+        <div className="card">
+          <h3>Confusion Matrix</h3>
+          <ConfusionBarChart
+            labels={data.confusion.labels}
+            nb={data.confusion.nb}
+            lr={data.confusion.lr}
+          />
+        </div>
+      </div>
     </div>
-    <div className="grid" style={{marginTop:16}}>
-      <div className="card"><PerformanceBarChart labels={data.comparison.labels} nb={data.comparison.nb} lr={data.comparison.lr} /></div>
-      <div className="card"><ConfusionBarChart labels={data.confusion.labels} nb={data.confusion.nb} lr={data.confusion.lr} /></div>
-    </div>
-  </div>)
+  )
 }
