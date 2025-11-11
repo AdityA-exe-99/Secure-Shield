@@ -137,6 +137,12 @@ textarea {
   font-size: 0.85rem;
 }
 
+/* Charts */
+.card.chart { padding: 12px; }
+.chart-body { height: 300px; }        /* ← set your preferred height */
+@media (max-width: 1024px){ .chart-body { height: 260px; } }
+@media (max-width: 640px){  .chart-body { height: 220px; } }
+
 @media (max-width: 1024px) {
   .grid-4 {
     grid-template-columns: repeat(2, 1fr);
