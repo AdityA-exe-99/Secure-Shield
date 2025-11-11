@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react'
+import KPIStat from '../components/KPIStat.jsx'
 import PerformanceBarChart from '../components/PerformanceBarChart.jsx'
 import ConfusionBarChart from '../components/ConfusionBarChart.jsx'
 import { getMetrics } from '../services/api.js'
 
-export default function Dashboard() {
+export default function Dashboard(){
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [err, setErr] = useState(null)
   const [data, setData] = useState(null)
 
-  useEffect(() => {
+  useEffect(()=>{
     getMetrics()
-      .then(({ data }) => setData(data))
-      .catch(e => setError(e?.response?.data?.detail || 'Failed to load metrics'))
-      .finally(() => setLoading(false))
-  }, [])
+      .then(({data})=>setData(data))
+      .catch(e=>setErr(e?.response?.data?.detail || 'Failed to load metrics'))
+      .finally(()=>setLoading(false))
+  },[])
 
   if (loading) return (<div className="container"><div className="card">Loading dashboard…</div></div>)
   if (error)   return (<div className="container"><div className="card">Error: {error}</div></div>)
@@ -23,7 +24,7 @@ export default function Dashboard() {
   return (
     <div className="container">
       <h2>Security Dashboard</h2>
-      <p className="small">Monitor your email spam detection results</p>
+      <div className="small">Monitor your email security in real-time</div>
 
       {/* KPIs */}
       <div className="grid grid-4" style={{ marginTop: 16 }}>
