@@ -1,28 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { postPredict, postPredictFile } from '../services/api.js'
 import { useStore } from '../state/store.jsx'
 
 export default function NewScan() {
-  const [tab, setTab] = useState('text')            // 'text' | 'file'
-  const [model, setModel] = useState('Both')        // 'MultinomialNB' | 'LogisticRegression' | 'Both'
+  const [tab, setTab] = useState('text') // 'text' | 'file'
+  const [model, setModel] = useState(localStorage.getItem('defaultModel') || 'Both')
   const [text, setText] = useState('')
   const [file, setFile] = useState(null)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState('')
 
   const { addResult } = useStore()
   const navigate = useNavigate()
 
+  const [minChars, setMinChars] = useState(Number(localStorage.getItem('minChars') || 10))
+  useEffect(() => {
+    // Sync live if user updates settings while app is open
+    const handler = () => setMinChars(Number(localStorage.getItem('minChars') || 10))
+    window.addEventListener('storage', handler)
+    return () => window.removeEventListener('storage', handler)
+  }, [])
+
   const words = text.trim() ? text.trim().split(/\s+/).length : 0
   const chars = text.length
-  const minChars = 10
   const canSubmit = tab === 'text' ? chars >= minChars : !!file
 
   async function analyze() {
     if (!canSubmit || busy) return
-    setBusy(true); setError(null)
-
+    setBusy(true); setError('')
     try {
       let resp
       if (tab === 'text') {
@@ -33,8 +39,8 @@ export default function NewScan() {
         fd.append('model', model)
         resp = await postPredictFile(fd)
       }
-
       const result = resp?.data ?? resp
+      result.text = result.text ?? text // ensure text is present for Results
       sessionStorage.setItem('lastResult', JSON.stringify(result))
       addResult(result)
       navigate('/results', { state: { result } })
@@ -54,17 +60,9 @@ export default function NewScan() {
 
         {/* pill tabs */}
         <div className="pill-tabs">
-          <button
-            className={`pill ${tab === 'text' ? 'active' : ''}`}
-            onClick={() => setTab('text')}
-          >
-            Text Analysis
+          <button className={`pill ${tab === 'text' ? 'active' : ''}`} onClick={() => setTab('text')}> Text Analysis
           </button>
-          <button
-            className={`pill ${tab === 'file' ? 'active' : ''}`}
-            onClick={() => setTab('file')}
-          >
-            File Upload
+          <button className={`pill ${tab === 'file' ? 'active' : ''}`} onClick={() => setTab('file')}> File Upload
           </button>
         </div>
       </div>
@@ -131,18 +129,10 @@ export default function NewScan() {
         )}
       </div>
 
-      {error && (
-        <div className="card ns-error">
-          {error}
-        </div>
-      )}
+      {error && <div className="card ns-error">{error}</div>}
 
       <div className="ns-footer">
-        <button
-          className="btn ns-submit"
-          disabled={!canSubmit || busy}
-          onClick={analyze}
-        >
+        <button className="btn ns-submit" disabled={!canSubmit || busy} onClick={analyze}>
           {busy ? 'Analyzing…' : 'Analyze Email'}
         </button>
       </div>
