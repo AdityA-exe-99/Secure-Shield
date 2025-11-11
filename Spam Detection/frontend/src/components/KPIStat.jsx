@@ -1,6 +1,6 @@
-// a lightweight, dependency-free KPI block with optional icon + accent color
+// Lightweight KPI card. Color accepts: "red" | "green" | "blue" (or omit)
 export default function KPIStat({ title, value, subtitle, color, icon }) {
-  const iconMap = {
+  const icons = {
     doc: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
         <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="#a6b7e7"/>
@@ -24,17 +24,20 @@ export default function KPIStat({ title, value, subtitle, color, icon }) {
         <path d="m3 17 6-6 4 4 7-7" stroke="#93c5fd" strokeWidth="2"/>
       </svg>
     )
-  }
+  };
+
+  const valueClass =
+    "value" + (color ? ` ${color.toLowerCase()}` : "");
 
   return (
-    <div className="card kpi">
-      <div className="kpi-top" style={{borderTopColor: color || '#1f3b75'}} />
-      <div className="row" style={{alignItems:'center', justifyContent:'space-between'}}>
-        <div className="muted small">{title}</div>
-        <div className="icon-wrap">{iconMap[icon]}</div>
-      </div>
-      <div className="kpi-value" style={{color: color || 'var(--text)'}}>{value}</div>
-      <div className="muted small">{subtitle}</div>
-    </div>
-  )
+    <section className="card kpi">
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span className="small">{title}</span>
+        {icon && <span>{icons[icon]}</span>}
+      </header>
+
+      <div className={valueClass}>{value}</div>
+      <div className="small">{subtitle}</div>
+    </section>
+  );
 }
