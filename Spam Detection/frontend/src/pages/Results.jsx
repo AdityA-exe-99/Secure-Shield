@@ -28,33 +28,30 @@ export default function Results() {
     )
   }
 
-  // ---- Gather models from the response ----
+  // Collect models
   const nb = res.nb || (res.model === 'MultinomialNB' ? res.result : null)
   const lr = res.lr || (res.model === 'LogisticRegression' ? res.result : null)
 
-  // ---- Normalize and choose the winner (fixes "always SAFE" issue) ----
+  // Winner logic (highest-confidence)
   const toPct = (s) => (s > 1 ? s : s * 100)
-
   const candidates = []
   if (nb) candidates.push({ name: 'Naïve Bayes', score: toPct(nb.score || 0), label: nb.label })
   if (lr) candidates.push({ name: 'Log. Regression', score: toPct(lr.score || 0), label: lr.label })
   if (!nb && !lr && res.result) {
     candidates.push({ name: res.model || 'Result', score: toPct(res.result.score || 0), label: res.result.label })
   }
-
   const best = candidates.reduce((a, b) => (b.score > a.score ? b : a), { score: -1, label: 'unknown', name: '—' })
 
-  const confidence = Math.round(best.score * 100) / 100 // e.g., 96.4
+  const confidence = Math.round(best.score * 100) / 100
   const winner = best.name
   const isSpam = (best.label || '').toLowerCase() === 'spam'
   const finalTitle = isSpam ? 'SPAM EMAIL' : 'SAFE EMAIL'
   const finalColor = isSpam ? '#ef4444' : '#22c55e'
-
   const agree = nb && lr ? nb.label === lr.label : false
 
   const text = res.text || ''
 
-  // ---- Drive the pie from the WINNER's score/label ----
+  // Pie uses winning model score as probability
   const bestScore01 = best.score > 1 ? best.score / 100 : best.score
   const spamProb = isSpam ? bestScore01 : 1 - bestScore01
   const hamProb = 1 - spamProb
@@ -69,6 +66,7 @@ export default function Results() {
 
   return (
     <div className="container res-wrap">
+      {/* Summary */}
       <div className="res-card">
         <h2 style={{ color: '#f8fafc', marginBottom: 8 }}>Analysis Report</h2>
         <div className="small" style={{ color: '#94a3b8' }}>Overall Result</div>
@@ -83,6 +81,7 @@ export default function Results() {
         </div>
       </div>
 
+      {/* Email content */}
       <div className="res-card">
         <h3>Email Content</h3>
         <div className="input" style={{ whiteSpace: 'pre-wrap', color: '#cbd5e1' }}>
@@ -93,41 +92,31 @@ export default function Results() {
         </div>
       </div>
 
+      {/* Pie (centered) */}
       <div
         className="res-card res-chart"
-        style={{
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
       >
         <h3 style={{ marginBottom: 12 }}>Confidence Distribution</h3>
-        <div style={{ width: '60%', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '50%', display: 'flex', justifyContent: 'center' }}>
           <ConfidencePie spam={spamProb} ham={hamProb} />
         </div>
       </div>
 
+      {/* Line (centered) */}
       <div
         className="res-card res-chart"
-        style={{
-          textAlign: 'center',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
       >
         <h3 style={{ marginBottom: 12 }}>Confidence Analysis Progression</h3>
-        <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '80%', display: 'flex', justifyContent: 'center' }}>
           <ConfidenceLine points={[0.98, 0.985, 0.99, 0.99, 0.99]} />
         </div>
       </div>
 
-
+      {/* CTA */}
       <div className="res-actions">
-        <button className="res-btn" onClick={() => navigate('/new')}>
+        <button className="res-btn" onClick={() => navigate('/new') /* change to '/newscan' if that's your route */}>
           Analyze Another Email
         </button>
       </div>
